@@ -1,0 +1,277 @@
+import pytest
+
+from src.python_janitor.strings import (
+    clean_string,
+    empty_to_none,
+    normalize_unicode,
+    normalize_whitespace,
+    remove_special_characters,
+    to_camel_case,
+    to_kebab_case,
+    to_pascal_case,
+    to_snake_case,
+)
+
+
+# ---------------------------------------------------------------------------
+# normalize_whitespace
+# ---------------------------------------------------------------------------
+class TestNormalizeWhitespace:
+    def test_collapses_internal_spaces(self):
+        assert normalize_whitespace("hello   world") == "hello world"
+
+    def test_collapses_tabs_and_newlines(self):
+        assert normalize_whitespace("hello\t\nworld") == "hello world"
+
+    def test_strips_leading_trailing(self):
+        assert normalize_whitespace("  hello world  ") == "hello world"
+
+    def test_already_clean(self):
+        assert normalize_whitespace("hello world") == "hello world"
+
+    def test_empty_string(self):
+        assert normalize_whitespace("") == ""
+
+    def test_only_whitespace(self):
+        assert normalize_whitespace("     ") == ""
+
+
+# ---------------------------------------------------------------------------
+# normalize_unicode
+# ---------------------------------------------------------------------------
+class TestNormalizeUnicode:
+    def test_strips_accents(self):
+        assert normalize_unicode("café") == "cafe"
+
+    def test_strips_multiple_accents(self):
+        assert normalize_unicode("résumé") == "resume"
+
+    def test_latin_outliers(self):
+        assert normalize_unicode("Ø") == "O"
+
+    def test_already_ascii(self):
+        assert normalize_unicode("hello") == "hello"
+
+    def test_empty_string(self):
+        assert normalize_unicode("") == ""
+
+    def test_mixed(self):
+        assert normalize_unicode("héllo wörld") == "hello woerld"
+
+
+# ---------------------------------------------------------------------------
+# remove_special_characters
+# ---------------------------------------------------------------------------
+class TestRemoveSpecialCharacters:
+    def test_removes_punctuation(self):
+        assert remove_special_characters("hello, world!") == "hello world"
+
+    def test_keep_hyphen(self):
+        assert remove_special_characters("hello-world!", keep="-") == "hello-world"
+
+    def test_keep_multiple(self):
+        assert (
+            remove_special_characters("hello_world-2024!", keep="-_")
+            == "hello_world-2024"
+        )
+
+    def test_already_clean(self):
+        assert remove_special_characters("hello world") == "hello world"
+
+    def test_empty_string(self):
+        assert remove_special_characters("") == ""
+
+    def test_only_special_chars(self):
+        assert remove_special_characters("!@#$%") == ""
+
+    def test_numbers_preserved(self):
+        assert remove_special_characters("abc123!") == "abc123"
+
+
+# ---------------------------------------------------------------------------
+# to_snake_case
+# ---------------------------------------------------------------------------
+class TestToSnakeCase:
+    def test_space_separated(self):
+        assert to_snake_case("hello world") == "hello_world"
+
+    def test_camel_case_input(self):
+        assert to_snake_case("helloWorld") == "hello_world"
+
+    def test_pascal_case_input(self):
+        assert to_snake_case("HelloWorld") == "hello_world"
+
+    def test_already_snake(self):
+        assert to_snake_case("hello_world") == "hello_world"
+
+    def test_uppercase(self):
+        assert to_snake_case("HELLO WORLD") == "hello_world"
+
+    def test_mixed_separators(self):
+        assert to_snake_case("Hello-World_foo") == "hello_world_foo"
+
+    def test_leading_trailing_spaces(self):
+        assert to_snake_case("  hello world  ") == "hello_world"
+
+    def test_empty_string(self):
+        assert to_snake_case("") == ""
+
+
+# ---------------------------------------------------------------------------
+# to_kebab_case
+# ---------------------------------------------------------------------------
+class TestToKebabCase:
+    def test_space_separated(self):
+        assert to_kebab_case("hello world") == "hello-world"
+
+    def test_camel_case_input(self):
+        assert to_kebab_case("helloWorld") == "hello-world"
+
+    def test_pascal_case_input(self):
+        assert to_kebab_case("HelloWorld") == "hello-world"
+
+    def test_already_kebab(self):
+        assert to_kebab_case("hello-world") == "hello-world"
+
+    def test_uppercase(self):
+        assert to_kebab_case("HELLO WORLD") == "hello-world"
+
+    def test_empty_string(self):
+        assert to_kebab_case("") == ""
+
+
+# ---------------------------------------------------------------------------
+# to_pascal_case
+# ---------------------------------------------------------------------------
+class TestToPascalCase:
+    def test_space_separated(self):
+        assert to_pascal_case("hello world") == "HelloWorld"
+
+    def test_snake_case_input(self):
+        assert to_pascal_case("hello_world") == "HelloWorld"
+
+    def test_kebab_case_input(self):
+        assert to_pascal_case("hello-world") == "HelloWorld"
+
+    def test_already_pascal(self):
+        assert to_pascal_case("HelloWorld") == "HelloWorld"
+
+    def test_uppercase_input(self):
+        assert to_pascal_case("HELLO WORLD") == "HelloWorld"
+
+    def test_empty_string(self):
+        assert to_pascal_case("") == ""
+
+
+# ---------------------------------------------------------------------------
+# to_camel_case
+# ---------------------------------------------------------------------------
+class TestToCamelCase:
+    def test_space_separated(self):
+        assert to_camel_case("hello world") == "helloWorld"
+
+    def test_snake_case_input(self):
+        assert to_camel_case("hello_world") == "helloWorld"
+
+    def test_already_camel(self):
+        assert to_camel_case("helloWorld") == "helloWorld"
+
+    def test_pascal_input(self):
+        assert to_camel_case("HelloWorld") == "helloWorld"
+
+    def test_single_word(self):
+        assert to_camel_case("hello") == "hello"
+
+    def test_empty_string(self):
+        assert to_camel_case("") == ""
+
+
+# ---------------------------------------------------------------------------
+# empty_to_none
+# ---------------------------------------------------------------------------
+class TestEmptyToNone:
+    def test_empty_string(self):
+        assert empty_to_none("") is None
+
+    def test_whitespace_only(self):
+        assert empty_to_none("   ") is None
+
+    def test_normal_string(self):
+        assert empty_to_none("hello") == "hello"
+
+    def test_string_with_spaces(self):
+        assert empty_to_none("  hello  ") == "  hello  "
+
+    def test_single_space(self):
+        assert empty_to_none(" ") is None
+
+
+# ---------------------------------------------------------------------------
+# clean_string (pipeline integration)
+# ---------------------------------------------------------------------------
+class TestCleanString:
+    def test_defaults(self):
+        result = clean_string("  héllo   wörld  ")
+        assert result == "hello woerld"
+
+    def test_unicode_off(self):
+        result = clean_string("café", unicode=False)
+        assert result == "café"
+
+    def test_whitespace_off(self):
+        result = clean_string("hello   world", whitespace=False)
+        assert result == "hello   world"
+
+    def test_special_chars_on(self):
+        result = clean_string("hello, world!", special_chars=True)
+        assert result == "hello world"
+
+    def test_special_chars_creates_whitespace_that_gets_cleaned(self):
+        # removing chars from "hello---world" should not leave multiple spaces
+        result = clean_string("hello---world", special_chars=True)
+        assert result == "helloworld"
+
+    def test_case_snake(self):
+        result = clean_string("Hello World", case="snake")
+        assert result == "hello_world"
+
+    def test_case_kebab(self):
+        result = clean_string("Hello World", case="kebab")
+        assert result == "hello-world"
+
+    def test_case_camel(self):
+        result = clean_string("Hello World", case="camel")
+        assert result == "helloWorld"
+
+    def test_case_pascal(self):
+        result = clean_string("hello world", case="pascal")
+        assert result == "HelloWorld"
+
+    def test_case_upper(self):
+        result = clean_string("hello world", case="upper")
+        assert result == "HELLO WORLD"
+
+    def test_case_lower(self):
+        result = clean_string("HELLO WORLD", case="lower")
+        assert result == "hello world"
+
+    def test_case_title(self):
+        result = clean_string("hello world", case="title")
+        assert result == "Hello World"
+
+    def test_invalid_case_raises(self):
+        with pytest.raises(ValueError):
+            clean_string("hello", case="invalid")
+
+    def test_empty_string(self):
+        assert clean_string("") == ""
+
+    def test_full_pipeline(self):
+        result = clean_string(
+            "  héllo,   wörld!  ",
+            unicode=True,
+            whitespace=True,
+            special_chars=True,
+            case="snake",
+        )
+        assert result == "hello_woerld"
