@@ -3,10 +3,6 @@
 Python string clean-up tool.
 
 ## TODO
-- [ ] Strings: Add boundaries support:
-  1. [ ] Insert a separator between a lowercase and uppercase letter
-  2. [ ] Replace all non-alphanumeric characters with separator
-  3. [ ] Lowercase
 - [ ] DataFrame: Add DataFrame support
 
 ## Examples
