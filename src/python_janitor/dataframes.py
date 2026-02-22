@@ -1,65 +1,65 @@
+from typing import Literal, get_args
+
 import polars as pl
 
+from src.python_janitor.strings import (
+    normalize_unicode,
+    normalize_whitespace,
+    remove_special_characters,
+    to_camel_case,
+    to_kebab_case,
+    to_pascal_case,
+    to_snake_case,
+)
 
-def clean_column_names(df: pl.DataFrame) -> pl.DataFrame:
-    """Rename all columns to snake_case, stripping special characters and normalizing whitespace."""
-    passDataFrame
-
-
-def strip_string_columns(
-    df: pl.DataFrame, columns: list[str] | None = None
-) -> pl.DataFrame:
-    """Strip leading and trailing whitespace from all (or specified) string columns.
-
-    Args:
-        df: Input DataFrame.
-        columns: List of column names to process. If None, all String columns are processed.
-    """
-    pass
+CASING = Literal["snake", "kebab", "camel", "pascal"]
 
 
-def normalize_string_columns(
-    df: pl.DataFrame, columns: list[str] | None = None
-) -> pl.DataFrame:
-    """Normalize internal whitespace in all (or specified) string columns."""
-    pass
+def col_normalize_whitespace(df: pl.DataFrame) -> pl.DataFrame:
+    """Strip leading and trailing whitespace and normalize internal whitespace in all columns."""
+    return df.rename({col: normalize_whitespace(col) for col in df.columns})
 
 
-def remove_special_characters_columns(
-    df: pl.DataFrame, columns: list[str] | None = None, keep: str = ""
-) -> pl.DataFrame:
-    """Remove special characters from all (or specified) string columns.
+def col_clean_names(df: pl.DataFrame, case: CASING = "snake") -> pl.DataFrame:
+    """Rename all columns to requested casing, stripping special characters and normalizing whitespace."""
 
-    Args:
-        df: Input DataFrame.
-        columns: List of column names to process. If None, all String columns are processed.
-        keep: Additional characters to preserve.
-    """
-    pass
+    match case:
+        case "snake":
+            x = df.rename({col: to_snake_case(col) for col in df.columns})
+        case "kebab":
+            x = df.rename({col: to_kebab_case(col) for col in df.columns})
+        case "camel":
+            x = df.rename({col: to_camel_case(col) for col in df.columns})
+        case "pascal":
+            x = df.rename({col: to_pascal_case(col) for col in df.columns})
+        case _:
+            raise ValueError(f"Invalid case {case!r}. Expected one of: {get_args(CASING)}")
+    return x
 
 
-def empty_to_null(df: pl.DataFrame, columns: list[str] | None = None) -> pl.DataFrame:
-    """Replace empty or whitespace-only strings with null in all (or specified) string columns."""
-    ...
+def col_remove_special_characters(df: pl.DataFrame) -> pl.DataFrame:
+    """Remove special characters from all columns."""
+    return df.rename({col: remove_special_characters(normalize_unicode(col)) for col in df.columns})
 
 
 def clean_dataframe(
     df: pl.DataFrame,
     *,
-    column_names: bool = True,
-    strip: bool = True,
-    normalize: bool = True,
-    empty_to_null: bool = True,
-    columns: list[str] | None = None,
+    case: CASING = "snake",
+    ascii_only: bool = True,
 ) -> pl.DataFrame:
     """Apply a configurable pipeline of cleaning steps to a DataFrame.
 
+    By default, leading and trailing whitespace from column names are stripped. Additionally,
+    internal whitespaces are normalize.
+
     Args:
         df: Input DataFrame.
-        column_names: Whether to clean column names to snake_case.
-        strip: Whether to strip whitespace from string columns.
-        normalize: Whether to normalize internal whitespace in string columns.
-        empty_to_null: Whether to replace empty strings with null.
-        columns: Columns to apply string cleaning to. If None, all String columns are processed.
+        case: Convert to "snake" (default), "kebab", "camel", or "pascal" casing
+        ascii_only: Whether to convert columns to ASCII-safe string (default: True)
     """
-    pass
+    x = col_normalize_whitespace(df)
+    x = col_clean_names(x, case=case)
+    if ascii_only:
+        x = col_remove_special_characters(x)
+    return x
