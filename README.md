@@ -2,40 +2,30 @@
 
 Python string clean-up tool.
 
-## TODO
-- [ ] DataFrame: Add DataFrame support
-
 ## Examples
 
+See [examples.py](./examples.py).
+
 ```python
-normalize_whitespace("hello   world")
-# "hello world"
+normalize_whitespace("hello   world")              # "hello world"
+normalize_unicode("café")                          # "cafe"
 
-normalize_unicode("café")
-# "cafe"
+remove_special_characters("hello, world!")         # "hello world"
 
-remove_special_characters("hello, world!")
-# "hello world"
+to_snake_case("hello world")                       # "hello_world"
+to_kebab_case("hello world")                       # "hello-world"
+to_pascal_case("hello world")                      # "HelloWorld"
+to_camel_case("hello world")                       # "helloWorld"
+to_none_if_empty("   ")                            # None
 
-to_snake_case("hello world")
-# "hello_world"
+clean_string("  héllo   wörld  ")                  # "hello woerld"
+clean_string("café", unicode=False)                # "café"
+clean_string("hello   world", whitespace=False)    # "hello   world"
+clean_string("hello, world!", special_chars=True)  # "hello world"
 
-to_kebab_case("hello world")
-# "hello-world"
-
-to_pascal_case("hello world")
-# "HelloWorld"
-
-to_camel_case("hello world")
-# "helloWorld"
-
-split_into_words("helloWorld")
-# ["hello", "World"]
-
-clean_string("  héllo   wörld  ")
-clean_string("café", unicode=False)
-clean_string("hello   world", whitespace=False)
-clean_string("hello, world!", special_chars=True)
+clean_dataframe(df)
+clean_dataframe(df, case="pascal")
+clean_dataframe(df, ascii_only=False)
 ```
 
 ## Structure
@@ -49,7 +39,7 @@ string-janitor/
 │   └── string_janitor/
 │       ├── __init__.py
 │       ├── strings.py       # String cleaning functions
-│       └── dataframes.py    # Polars DataFrame/Series cleaning
+│       └── dataframes.py    # Polars DataFrame cleaning
 └── tests/
     ├── __init__.py
     ├── test_strings.py
