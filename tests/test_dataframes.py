@@ -6,10 +6,10 @@ import polars as pl
 import pytest
 
 from src.python_janitor.dataframes import (
+    _col_apply_case,
+    _col_normalize_whitespace,
+    _col_remove_special_characters,
     clean_dataframe,
-    col_clean_names,
-    col_normalize_whitespace,
-    col_remove_special_characters,
 )
 
 
@@ -26,95 +26,95 @@ def col_names(df: pl.DataFrame) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# col_normalize_whitespace
+# _col_normalize_whitespace
 # ---------------------------------------------------------------------------
 class TestColNormalizeWhitespace:
     def test_strips_leading_trailing(self):
         df = make_df("  hello  ", "  world  ")
-        assert col_names(col_normalize_whitespace(df)) == ["hello", "world"]
+        assert col_names(_col_normalize_whitespace(df)) == ["hello", "world"]
 
     def test_collapses_internal_spaces(self):
         df = make_df("hello   world")
-        assert col_names(col_normalize_whitespace(df)) == ["hello world"]
+        assert col_names(_col_normalize_whitespace(df)) == ["hello world"]
 
     def test_collapses_tabs_and_newlines(self):
         df = make_df("hello\t\nworld")
-        assert col_names(col_normalize_whitespace(df)) == ["hello world"]
+        assert col_names(_col_normalize_whitespace(df)) == ["hello world"]
 
     def test_already_clean(self):
         df = make_df("hello", "world")
-        assert col_names(col_normalize_whitespace(df)) == ["hello", "world"]
+        assert col_names(_col_normalize_whitespace(df)) == ["hello", "world"]
 
     def test_empty_column_name(self):
         df = make_df("   ")
-        assert col_names(col_normalize_whitespace(df)) == [""]
+        assert col_names(_col_normalize_whitespace(df)) == [""]
 
     def test_does_not_modify_data(self):
         df = make_df("  hello  ")
-        assert col_normalize_whitespace(df).shape == df.shape
+        assert _col_normalize_whitespace(df).shape == df.shape
 
 
 # ---------------------------------------------------------------------------
-# col_clean_names
+# _col_apply_case
 # ---------------------------------------------------------------------------
-class TestColCleanNames:
+class TestColApplyCase:
     def test_default_is_snake_case(self):
         df = make_df("Hello World", "FooBar")
-        assert col_names(col_clean_names(df)) == ["hello_world", "foo_bar"]
+        assert col_names(_col_apply_case(df)) == ["hello_world", "foo_bar"]
 
     def test_snake_case(self):
         df = make_df("Hello World", "FooBar")
-        assert col_names(col_clean_names(df, case="snake")) == ["hello_world", "foo_bar"]
+        assert col_names(_col_apply_case(df, case="snake")) == ["hello_world", "foo_bar"]
 
     def test_kebab_case(self):
         df = make_df("Hello World", "FooBar")
-        assert col_names(col_clean_names(df, case="kebab")) == ["hello-world", "foo-bar"]
+        assert col_names(_col_apply_case(df, case="kebab")) == ["hello-world", "foo-bar"]
 
     def test_camel_case(self):
         df = make_df("Hello World", "foo_bar")
-        assert col_names(col_clean_names(df, case="camel")) == ["helloWorld", "fooBar"]
+        assert col_names(_col_apply_case(df, case="camel")) == ["helloWorld", "fooBar"]
 
     def test_pascal_case(self):
         df = make_df("hello world", "foo_bar")
-        assert col_names(col_clean_names(df, case="pascal")) == ["HelloWorld", "FooBar"]
+        assert col_names(_col_apply_case(df, case="pascal")) == ["HelloWorld", "FooBar"]
 
     def test_invalid_case_raises(self):
         df = make_df("hello")
         with pytest.raises(ValueError):
-            col_clean_names(df, case="invalid")  # type: ignore[arg-type]
+            _col_apply_case(df, case="invalid")  # type: ignore[arg-type]
 
     def test_does_not_modify_data(self):
         df = make_df("Hello World")
-        assert col_clean_names(df).shape == df.shape
+        assert _col_apply_case(df).shape == df.shape
 
 
 # ---------------------------------------------------------------------------
-# col_remove_special_characters
+# _col_remove_special_characters
 # ---------------------------------------------------------------------------
 class TestColRemoveSpecialCharacters:
     def test_removes_punctuation(self):
         df = make_df("hello, world!", "foo@bar")
-        assert col_names(col_remove_special_characters(df)) == ["hello world", "foobar"]
+        assert col_names(_col_remove_special_characters(df)) == ["hello world", "foobar"]
 
     def test_strips_accents(self):
         df = make_df("café")
-        assert col_names(col_remove_special_characters(df)) == ["cafe"]
+        assert col_names(_col_remove_special_characters(df)) == ["cafe"]
 
     def test_normalizes_umlaut(self):
         df = make_df("wörld")
-        assert col_names(col_remove_special_characters(df)) == ["woerld"]
+        assert col_names(_col_remove_special_characters(df)) == ["woerld"]
 
     def test_combined_special_and_unicode(self):
         df = make_df("héllo, wörld!")
-        assert col_names(col_remove_special_characters(df)) == ["hello woerld"]
+        assert col_names(_col_remove_special_characters(df)) == ["hello woerld"]
 
     def test_already_clean(self):
         df = make_df("hello", "world")
-        assert col_names(col_remove_special_characters(df)) == ["hello", "world"]
+        assert col_names(_col_remove_special_characters(df)) == ["hello", "world"]
 
     def test_does_not_modify_data(self):
         df = make_df("héllo!")
-        assert col_remove_special_characters(df).shape == df.shape
+        assert _col_remove_special_characters(df).shape == df.shape
 
 
 # ---------------------------------------------------------------------------

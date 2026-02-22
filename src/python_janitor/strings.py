@@ -6,7 +6,7 @@ LATIN = "ä  æ  ǽ  đ ð ƒ ħ ı ł ø ǿ ö  œ  ß  ŧ ü  Ä  Æ  Ǽ  Đ �
 ASCII = "ae ae ae d d f h i l o o oe oe ss t ue AE AE AE D D F H I L O O OE OE SS T UE"
 
 
-def strip_whitespace(s: str) -> str:
+def _strip_whitespace(s: str) -> str:
     """Remove leading and trailing whitespace from a string."""
     return s.strip()
 
@@ -42,23 +42,20 @@ def normalize_unicode(s: str) -> str:
 
 def to_snake_case(s: str) -> str:
     """Convert a string to snake_case (e.g. 'Hello World' -> 'hello_world')."""
-    x = split_into_words(normalize_whitespace(s))
+    x = _split_into_words(normalize_whitespace(s))
     return "_".join(x).lower().strip()
 
 
 def to_kebab_case(s: str) -> str:
-    """Convert a string to Kebab Case (e.g. 'hello world' -> 'hello-world')."""
-    x = split_into_words(normalize_whitespace(s))
+    """Convert a string to kebab-case (e.g. 'hello world' -> 'hello-world')."""
+    x = _split_into_words(normalize_whitespace(s))
     return "-".join(x).lower().strip()
 
 
 def to_pascal_case(s: str) -> str:
     """Convert a string to PascalCase (e.g. 'hello world' -> 'HelloWorld')."""
-    x = split_into_words(remove_special_characters(s.strip(), keep="_- "))
+    x = _split_into_words(remove_special_characters(s.strip(), keep="_- "))
     return "".join([c.title() for c in x])
-
-    # x = remove_special_characters(s).title().strip().split()
-    # return "".join(x)
 
 
 def to_camel_case(s: str) -> str:
@@ -67,54 +64,12 @@ def to_camel_case(s: str) -> str:
     return "" if x == "" else x[0].lower() + x[1:]
 
 
-def empty_to_none(s: str) -> str | None:
+def to_none_if_empty(s: str) -> str | None:
     """Return None if the string is empty or whitespace-only, otherwise return the string."""
     if not s or s.strip() == "":
         return None
     else:
         return s
-
-
-def split_into_words(s: str) -> list[str]:
-    """Split words based on camelCase, PascalCase, and whitespace boundaries"""
-    words = []
-    current_word = []
-
-    for i, current_chr in enumerate(s):
-        prev_chr = s[i - 1] if i > 0 else None
-        next_chr = s[i + 1] if i < len(s) - 1 else None
-
-        # If delimiter, save current word and skip the delimiter
-        if _is_delimiter(current_chr):
-            if current_word:
-                words.append("".join(current_word))
-                current_word = []
-            continue
-
-        # If camelCase boundary, save current word and start new one
-        if _is_lower(prev_chr) and _is_upper(current_chr):
-            if current_word:
-                words.append("".join(current_word))
-                current_word = []
-
-        # If PascalCase, save word and start new
-        if (
-            0 < i < len(s) - 1
-            and _is_upper(prev_chr)
-            and _is_upper(current_chr)
-            and _is_lower(next_chr)
-        ):
-            if current_word:
-                words.append("".join(current_word))
-                current_word = []
-
-        current_word.append(current_chr)
-
-    # Add the last word if current_word is not empty
-    if current_word:
-        words.append("".join(current_word))
-
-    return words
 
 
 def clean_string(
@@ -166,16 +121,58 @@ def clean_string(
     return x
 
 
+def _split_into_words(s: str) -> list[str]:
+    """Split words based on camelCase, PascalCase, and whitespace boundaries."""
+    words = []
+    current_word = []
+
+    for i, current_chr in enumerate(s):
+        prev_chr = s[i - 1] if i > 0 else None
+        next_chr = s[i + 1] if i < len(s) - 1 else None
+
+        # If delimiter, save current word and skip the delimiter
+        if _is_delimiter(current_chr):
+            if current_word:
+                words.append("".join(current_word))
+                current_word = []
+            continue
+
+        # If camelCase boundary, save current word and start new one
+        if _is_lower(prev_chr) and _is_upper(current_chr):
+            if current_word:
+                words.append("".join(current_word))
+                current_word = []
+
+        # If PascalCase, save word and start new
+        if (
+            0 < i < len(s) - 1
+            and _is_upper(prev_chr)
+            and _is_upper(current_chr)
+            and _is_lower(next_chr)
+        ):
+            if current_word:
+                words.append("".join(current_word))
+                current_word = []
+
+        current_word.append(current_chr)
+
+    # Add the last word if current_word is not empty
+    if current_word:
+        words.append("".join(current_word))
+
+    return words
+
+
 def _is_delimiter(c: str) -> bool:
-    """Return True for whitespace, underscores, and hyphens"""
+    """Return True for whitespace, underscores, and hyphens."""
     return c.isspace() or c in {"_", "-"}
 
 
 def _is_upper(c: str | None) -> bool:
-    """Return True for uppercase character"""
+    """Return True for uppercase character."""
     return category(c) == "Lu" if c else False
 
 
 def _is_lower(c: str | None) -> bool:
-    """Return True for lowercase character"""
+    """Return True for lowercase character."""
     return category(c) == "Ll" if c else False
