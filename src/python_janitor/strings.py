@@ -1,5 +1,5 @@
 from re import escape, sub
-from unicodedata import combining, normalize
+from unicodedata import category, combining, normalize
 
 from src.python_janitor.utils import ALPHA_NUMERIC_SPACES, ASCII, LATIN
 
@@ -11,7 +11,7 @@ def strip_whitespace(s: str) -> str:
 
 def normalize_whitespace(s: str) -> str:
     """Replace all internal whitespace sequences with a single space."""
-    return sub("\s+", " ", s.strip()).strip()
+    return sub(r"\s+", " ", s.strip()).strip()
 
 
 def remove_special_characters(s: str, keep: str = "") -> str:
@@ -35,24 +35,28 @@ def normalize_unicode(s: str) -> str:
     Source: https://stackoverflow.com/a/71408065
     """
     outliers = str.maketrans(dict(zip(LATIN.split(), ASCII.split())))
-    return "".join(
-        c for c in normalize("NFD", s.translate(outliers)) if not combining(c)
-    )
+    return "".join(c for c in normalize("NFD", s.translate(outliers)) if not combining(c))
 
 
 def to_snake_case(s: str) -> str:
     """Convert a string to snake_case (e.g. 'Hello World' -> 'hello_world')."""
-    return sub("\s+", "_", s.lower().strip())
+    x = split_into_words(normalize_whitespace(s))
+    return "_".join(x).lower().strip()
 
 
 def to_kebab_case(s: str) -> str:
     """Convert a string to Kebab Case (e.g. 'hello world' -> 'hello-world')."""
-    return sub("\s+", "-", s.lower().strip())
+    x = split_into_words(normalize_whitespace(s))
+    return "-".join(x).lower().strip()
 
 
 def to_pascal_case(s: str) -> str:
     """Convert a string to PascalCase (e.g. 'hello world' -> 'HelloWorld')."""
-    return "".join(remove_special_characters(s).title().strip().split())
+    x = split_into_words(remove_special_characters(s.strip(), keep="_- "))
+    return "".join([c.title() for c in x])
+
+    # x = remove_special_characters(s).title().strip().split()
+    # return "".join(x)
 
 
 def to_camel_case(s: str) -> str:
@@ -67,6 +71,48 @@ def empty_to_none(s: str) -> str | None:
         return None
     else:
         return s
+
+
+def split_into_words(s: str) -> list[str]:
+    """Split words based on camelCase, PascalCase, and whitespace boundaries"""
+    words = []
+    current_word = []
+
+    for i, current_chr in enumerate(s):
+        prev_chr = s[i - 1] if i > 0 else None
+        next_chr = s[i + 1] if i < len(s) - 1 else None
+
+        # If delimiter, save current word and skip the delimiter
+        if _is_delimiter(current_chr):
+            if current_word:
+                words.append("".join(current_word))
+                current_word = []
+            continue
+
+        # If camelCase boundary, save current word and start new one
+        if _is_lower(prev_chr) and _is_upper(current_chr):
+            if current_word:
+                words.append("".join(current_word))
+                current_word = []
+
+        # If PascalCase, save word and start new
+        if (
+            0 < i < len(s) - 1
+            and _is_upper(prev_chr)
+            and _is_upper(current_chr)
+            and _is_lower(next_chr)
+        ):
+            if current_word:
+                words.append("".join(current_word))
+                current_word = []
+
+        current_word.append(current_chr)
+
+    # Add the last word if current_word is not empty
+    if current_word:
+        words.append("".join(current_word))
+
+    return words
 
 
 def clean_string(
@@ -116,3 +162,18 @@ def clean_string(
         case _:
             raise ValueError(f"Unknown case: {case}")
     return x
+
+
+def _is_delimiter(c: str) -> bool:
+    """Return True for whitespace, underscores, and hyphens"""
+    return c.isspace() or c in {"_", "-"}
+
+
+def _is_upper(c: str | None) -> bool:
+    """Return True for uppercase character"""
+    return category(c) == "Lu" if c else False
+
+
+def _is_lower(c: str | None) -> bool:
+    """Return True for lowercase character"""
+    return category(c) == "Ll" if c else False
