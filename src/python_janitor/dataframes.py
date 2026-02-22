@@ -39,7 +39,9 @@ def col_clean_names(df: pl.DataFrame, case: CASING = "snake") -> pl.DataFrame:
 
 def col_remove_special_characters(df: pl.DataFrame) -> pl.DataFrame:
     """Remove special characters from all columns."""
-    return df.rename({col: remove_special_characters(normalize_unicode(col)) for col in df.columns})
+    return df.rename(
+        {col: remove_special_characters(normalize_unicode(col), keep="_-") for col in df.columns}
+    )
 
 
 def clean_dataframe(
@@ -59,7 +61,7 @@ def clean_dataframe(
         ascii_only: Whether to convert columns to ASCII-safe string (default: True)
     """
     x = col_normalize_whitespace(df)
-    x = col_clean_names(x, case=case)
     if ascii_only:
         x = col_remove_special_characters(x)
+    x = col_clean_names(x, case=case)
     return x
