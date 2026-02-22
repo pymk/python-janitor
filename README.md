@@ -29,6 +29,9 @@ to_pascal_case("hello world")
 to_camel_case("hello world")
 # "helloWorld"
 
+split_into_words("helloWorld")
+# ["hello", "World"]
+
 clean_string("  héllo   wörld  ")
 clean_string("café", unicode=False)
 clean_string("hello   world", whitespace=False)
