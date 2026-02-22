@@ -49,8 +49,7 @@ string-janitor/
 │   └── string_janitor/
 │       ├── __init__.py
 │       ├── strings.py       # String cleaning functions
-│       ├── dataframes.py    # Polars DataFrame/Series cleaning
-│       └── utils.py         # Shared helpers (regex patterns, etc.)
+│       └── dataframes.py    # Polars DataFrame/Series cleaning
 └── tests/
     ├── __init__.py
     ├── test_strings.py
